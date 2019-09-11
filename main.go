@@ -21,6 +21,7 @@ type Config struct {
 	LogFile string
 }
 
+// start start http server
 func start(fileName string) error {
 	var (
 		err    error
@@ -28,31 +29,26 @@ func start(fileName string) error {
 	)
 
 	if _, err = toml.DecodeFile(fileName, &config); err != nil {
-		fmt.Printf("config file parse error: %v\n", err)
-		os.Exit(-1)
+		log.Fatalf("config file parse error: %v", err)
 	}
 
 	config.LogDir, err = filepath.Abs(path.Clean(config.LogDir))
 	if err != nil {
-		fmt.Printf("abs error: %v\n", err)
-		os.Exit(-1)
+		log.Fatalf("abs error: %v", err)
 	}
 
 	if err := os.MkdirAll(config.LogDir, 0755); err != nil {
-		fmt.Printf("mkdirall error: %v\n", err)
-		os.Exit(-1)
+		log.Fatalf("mkdirall error: %v", err)
 	}
 
 	if config.LogFile == "" {
-		fmt.Println("LogFile is nil")
-		os.Exit(-1)
+		log.Fatalf("LogFile is nil")
 	}
 
 	logFileName := path.Join(config.LogDir, path.Clean(config.LogFile))
 	logFile, err := os.OpenFile(logFileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		fmt.Printf("open %s error: %v\n", logFileName, err)
-		os.Exit(-1)
+		log.Fatalf("open %s error: %v", logFileName, err)
 	}
 	defer logFile.Close()
 	logger := log.New(logFile, config.APPID+" ", log.LstdFlags|log.Lshortfile)
@@ -64,8 +60,7 @@ func start(fileName string) error {
 	}
 
 	if err := server.ListenAndServe(); err != nil {
-		fmt.Printf("start server error: %v\n", err)
-		os.Exit(-1)
+		log.Fatalf("start server error: %v", err)
 	}
 
 	return nil
@@ -80,17 +75,16 @@ func main() {
 			if len(args) == 0 {
 				return fmt.Errorf("need config file")
 			}
-
 			if err := start(args[0]); err != nil {
-				fmt.Printf("start error: %+v\n", err)
+				return fmt.Errorf("start server error: %+v", err)
 			}
 			return nil
 		},
 	}
 
 	rootCmd := &cobra.Command{
-		Use:  "navyt server",
-		Long: "navyt server",
+		Use:  "o2k8s server",
+		Long: "o2k8s server",
 	}
 
 	rootCmd.AddCommand(cmdRun)
