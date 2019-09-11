@@ -1,0 +1,10 @@
+# id of the app
+APPID="v1"
+
+# listen addr
+Host="0.0.0.0"
+Port=12345
+
+# log config
+LogDir="/tmp/log/o2k8s"
+LogFile="o2k8s.log"
