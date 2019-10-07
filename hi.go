@@ -15,8 +15,7 @@ type HiHandler struct {
 // ServeHTTP response /hi
 func (h *HiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	host, _, _ := net.SplitHostPort(r.RemoteAddr)
-	r.ParseForm()
-	user := r.Form["name"][0]
+	user := r.FormValue("name")
 	h.logger.Printf("from: %s, name: %s", host, user)
 
 	w.Write([]byte(fmt.Sprintf("Hi %s From %s\n", user, host)))
