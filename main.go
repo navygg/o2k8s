@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
+	"syscall"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/spf13/cobra"
@@ -55,12 +59,26 @@ func start(fileName string) error {
 
 	hiHandler := HiHandler{logger: logger}
 	http.HandleFunc("/hi", hiHandler.ServeHTTP)
+
 	server := http.Server{
 		Addr: fmt.Sprintf("%v:%v", config.Host, config.Port),
 	}
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Printf("start server error: %v", err)
+		}
+	}()
 
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("start server error: %v", err)
+	// timeout context for shutdown
+	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	for s := range c {
+		log.Printf("got signal: %v", s)
+		server.Shutdown(ctx)
+		log.Printf("graceful shutdown")
+		return nil
 	}
 
 	return nil
