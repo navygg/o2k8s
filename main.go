@@ -69,11 +69,10 @@ func start(fileName string) error {
 		}
 	}()
 
-	// timeout context for shutdown
+	// graceful shutdown
 	ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-
 	for s := range c {
 		log.Printf("got signal: %v", s)
 		server.Shutdown(ctx)
