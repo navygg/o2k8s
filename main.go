@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -25,40 +26,49 @@ type Config struct {
 	LogFile string
 }
 
-// start start http server
-func start(fileName string) error {
-	var (
-		err    error
-		config Config
-	)
-
-	if _, err = toml.DecodeFile(fileName, &config); err != nil {
-		log.Fatalf("config file parse error: %v", err)
-	}
-
+// InitLog init a logger
+func InitLog(config *Config) (*log.Logger, error) {
+	var err error
 	config.LogDir, err = filepath.Abs(path.Clean(config.LogDir))
 	if err != nil {
-		log.Fatalf("abs error: %v", err)
+		return nil, errors.Wrap(err, "abs error")
 	}
-
 	if err := os.MkdirAll(config.LogDir, 0755); err != nil {
-		log.Fatalf("mkdirall error: %v", err)
+		return nil, errors.Wrap(err, "mkdirall error")
 	}
-
 	if config.LogFile == "" {
-		log.Fatalf("LogFile is nil")
+		return nil, errors.New("LogFile is nil")
 	}
 
 	logFileName := path.Join(config.LogDir, path.Clean(config.LogFile))
 	logFile, err := os.OpenFile(logFileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		log.Fatalf("open %s error: %v", logFileName, err)
+		return nil, errors.Wrap(err, fmt.Sprintf("open %s error", logFileName))
 	}
 	defer logFile.Close()
-	logger := log.New(logFile, config.APPID+" ", log.LstdFlags|log.Lshortfile)
 
+	return log.New(logFile, config.APPID+" ", log.LstdFlags|log.Lshortfile), nil
+}
+
+// AddHandler add url handler
+func AddHandler(logger *log.Logger) {
 	hiHandler := HiHandler{logger: logger}
 	http.HandleFunc("/hi", hiHandler.ServeHTTP)
+}
+
+// start start http server
+func start(fileName string) error {
+	config := &Config{}
+	if _, err := toml.DecodeFile(fileName, config); err != nil {
+		log.Fatalf("config file parse error: %v", err)
+	}
+
+	logger, err := InitLog(config)
+	if err != nil {
+		log.Fatalf("InitLog error: %v", err)
+	}
+
+	AddHandler(logger)
 
 	server := http.Server{
 		Addr: fmt.Sprintf("%v:%v", config.Host, config.Port),
