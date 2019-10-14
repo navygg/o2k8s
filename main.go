@@ -19,11 +19,12 @@ import (
 
 // Config config.toml
 type Config struct {
-	APPID   string
-	Host    string
-	Port    int
-	LogDir  string
-	LogFile string
+	APPID     string
+	Host      string
+	Port      int
+	LogDir    string
+	LogFile   string
+	SleepTime int
 }
 
 // InitLog init a logger
@@ -51,8 +52,11 @@ func InitLog(config *Config) (*log.Logger, error) {
 }
 
 // AddHandler add url handler
-func AddHandler(logger *log.Logger) {
-	hiHandler := HiHandler{logger: logger}
+func AddHandler(config *Config, logger *log.Logger) {
+	hiHandler := HiHandler{
+		config: config,
+		logger: logger,
+	}
 	http.HandleFunc("/hi", hiHandler.ServeHTTP)
 }
 
@@ -68,7 +72,7 @@ func start(fileName string) error {
 		log.Fatalf("InitLog error: %v", err)
 	}
 
-	AddHandler(logger)
+	AddHandler(config, logger)
 
 	server := http.Server{
 		Addr: fmt.Sprintf("%v:%v", config.Host, config.Port),

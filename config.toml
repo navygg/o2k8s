@@ -8,3 +8,5 @@ Port=12345
 # log config
 LogDir="/tmp/log/o2k8s"
 LogFile="o2k8s.log"
+
+SleepTime=1
