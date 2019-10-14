@@ -20,5 +20,6 @@ func (h *HiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.logger.Printf("from: %s, name: %s", client, user)
 	time.Sleep(time.Duration(h.config.SleepTime) * time.Second)
 
-	w.Write([]byte(fmt.Sprintf("Hi %s From %s\n", user, client)))
+	ret := fmt.Sprintf("Hi %s From %s", user, client)
+	http.Error(w, ret, http.StatusOK)
 }

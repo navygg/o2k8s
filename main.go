@@ -46,7 +46,6 @@ func InitLog(config *Config) (*log.Logger, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("open %s error", logFileName))
 	}
-	defer logFile.Close()
 
 	return log.New(logFile, config.APPID+" ", log.LstdFlags|log.Lshortfile), nil
 }
@@ -58,6 +57,9 @@ func AddHandler(config *Config, logger *log.Logger) {
 		logger: logger,
 	}
 	http.HandleFunc("/hi", hiHandler.ServeHTTP)
+
+	pingHandler := PingHandler{}
+	http.HandleFunc("/ping", pingHandler.ServeHTTP)
 }
 
 // start start http server
